@@ -46,6 +46,7 @@ const styles = {
     fontSize: '16px',
     lineHeight: '1.5',
     color: '#333',
+    whiteSpace: 'pre-line'
   },
   button: {
     display: 'inline-block',
@@ -59,6 +60,10 @@ const styles = {
 };
 
 const EmailPreview = ({ from, to,bcc, subject, body }) => {
+  console.log(body);
+  const createMarkup = () => {
+    return { __html: body?.replaceAll(/\\r\\n/g, '<br />') };
+  }
   return (
     <div style={styles.container}>
       {/* Header section */}
@@ -85,37 +90,15 @@ const EmailPreview = ({ from, to,bcc, subject, body }) => {
           <div style={styles.detailContent}>{subject}</div>
         </div>
 
-        {/* Email body */}
-        <p style={styles.body}>{body}</p>
+     
+        <div  style={styles.body} dangerouslySetInnerHTML={createMarkup()} />
+ 
 
-        {/* Action Button */}
-        {/* <a href="mailto:" style={styles.button}>
-          Reply to Email
-        </a> */}
+      
       </div>
     </div>
   );
 };
 
-// Example usage of the EmailPreview component
-// const App = () => {
-//   const emailData = {
-//     from: 'sender@example.com',
-//     to: 'receiver@example.com',
-//     subject: 'This is the subject line',
-//     body: 'Hello, this is the email body. Feel free to reply to this email.',
-//   };
-
-//   return (
-//     <div>
-//       <EmailPreview
-//         from={from}
-//         to={to}
-//         subject={subject}
-//         body={body}
-//       />
-//     </div>
-//   );
-// };
 
 export default EmailPreview;

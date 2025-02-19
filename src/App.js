@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ReactDocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer';
 import EmailPreview from './EmailPreview';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {Buffer} from 'buffer';
 
 const AppFileViewer = React.memo(() => {
   console.log('Component rendered');
@@ -16,9 +17,21 @@ const AppFileViewer = React.memo(() => {
   const [imageUrl, setImageUrl] = useState('');
   const [documentContent, setDocumentContent] = useState([]);
   const [error, setError] = useState(null);
-  const apiendPoint1 = 'http://localhost:8080/fileviewer/file';
-  const apiendPoint2 = 'http://localhost:8080/fileviewer/readfile';
-  const apiendPoint3 = 'http://localhost:8080/fileviewer/readmsg';
+  const officeViewerBase = "https://view.officeapps.live.com/op/embed.aspx?src=";
+
+  // const apiendPoint1 = 'http://localhost:8080/fileviewer/file';
+  // const apiendPoint2 = 'http://localhost:8080/fileviewer/readfile';
+  // const apiendPoint3 = 'http://localhost:8080/fileviewer/readmsg';
+  // const apiendPoint4 = 'http://localhost:8080/fileviewer/readfilepng';
+
+  const apiendPoint1 = 'http://3.82.214.180:8080/fileviewer/fileviewer/file';
+  const apiendPoint2 = 'http://3.82.214.180:8080/fileviewer/fileviewer/readfile';
+  const apiendPoint3 = 'http://3.82.214.180:8080/fileviewer/fileviewer/readmsg';
+  const apiendPoint4 = 'http://3.82.214.180:8080/fileviewer/readfilepng';
+
+  const styles = {
+    marginLeft: '1%',
+  };
 
   useEffect(() => {
     const filetype = fileObj.get("filetype");
@@ -35,53 +48,63 @@ const AppFileViewer = React.memo(() => {
   const fetchData = useCallback(() => {
     if (selectedParams === 'msg') {
       fetch(`${apiendPoint3}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
-        .then(response => response.json())
+        .then(response => response.text())
         .then(data => {
-          setSelectedEmail(data);
+const jsonString = atob(data);
+const obj = JSON.parse(jsonString);
+setSelectedEmail(obj)
         });
     } else if (selectedParams === 'txt') {
         fetch(`${apiendPoint1}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
         .then(response => response.text())
         .then(data => {
-          console.log(data);
-          const str = data.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\t/g, "\u00a0").replace(/\n/g, '<br/>');
+          
+          const jsonString = Buffer.from(data,'base64').toString('utf-8');
+          const str = jsonString.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\t/g, "\u00a0").replace(/\n/g, '<br/>');
           setSelectedText(str);
         });
     } else if (selectedParams === 'png') {
-        fetch(`${apiendPoint2}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
+        fetch(`${apiendPoint4}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
         .then(response => response.text())
         .then(data => {
-          setImageUrl(data);
-         console.log(data);
+          const url = `data:image/png;base64,${data}`;
+          setImageUrl(url);
         });        
        } else if (selectedParams === 'jpeg') {
         fetch(`${apiendPoint1}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
-        .then(response => response.blob())
-        .then(blob => {
-          const objectURL = URL.createObjectURL(blob);
-          console.log(objectURL);
-          setImageUrl(objectURL);
+        .then(response => response.text())
+        .then(data => {
+         
+          //const base64Pdf = data.base64Pdf;
+          const url = `data:image/jpeg;base64,${data}`;
+          setImageUrl(url);
         });
     } else if (selectedParams === 'pdf') {
       fetch(`${apiendPoint1}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
-        .then(response => response.arrayBuffer())
+        .then(response => response.text())
         .then(data => {
-          console.log(data);
-          const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          setpdfUrl(url);
+          const base64Pdf = data;
+           const url = `data:application/pdf;base64,${base64Pdf}`;
+           setpdfUrl(url);
         });
     } else if (selectedParams === 'excel') {
         fetch(`${apiendPoint2}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
         .then(response => response.text())
         .then(data => {
-          setSelectedDocument(data);
+          const embeddedUrl = data.includes(officeViewerBase) ? data : `${officeViewerBase}${encodeURIComponent(data)}`;
+          setSelectedDocument(embeddedUrl);
         });      
     } else if (selectedParams === 'word') {
         fetch(`${apiendPoint2}?filetype=${selectedParams}&fileurl=${selectedUrl}`)
         .then(response => response.text())
         .then(data => {
-          setSelectedDocument(data);
+          //setSelectedDocument(data);
+          // const safeUrl = data.replaceAll(' ',"%20");
+          // console.log(safeUrl);
+          // setSelectedDocument(safeUrl);
+          const embeddedUrl = data.includes(officeViewerBase) ? data : `${officeViewerBase}${encodeURIComponent(data)}`;
+          // const safeUrl = encodeURIComponent(data);
+           setSelectedDocument(embeddedUrl);
         });    
     } else {
       setSelectedText('');
@@ -98,7 +121,7 @@ const AppFileViewer = React.memo(() => {
       <h1>React Doc Viewer</h1>
       {selectedParams === 'png' && <img src={imageUrl} alt="PNG" />}
       {(selectedParams === 'jpeg' || selectedParams === 'jpg') && <img src={imageUrl} alt="JPEG" />}
-      {(selectedParams === 'word' && selectedDocument) && (
+      {/* {(selectedParams === 'word' && selectedDocument) && (
         <iframe
           src={`https://view.officeapps.live.com/op/embed.aspx?src=${selectedDocument}`}
           width="100%" height="600px" sandbox="allow-scripts allow-forms allow-same-origin"
@@ -109,6 +132,36 @@ const AppFileViewer = React.memo(() => {
           src={`https://view.officeapps.live.com/op/embed.aspx?src=${selectedDocument}`}
           width="100%" height="600px" sandbox="allow-scripts allow-forms allow-same-origin"
         ></iframe>
+      )} */}
+     
+     
+
+      {(selectedParams === 'word' && selectedDocument) && (
+        
+        //  <iframe
+        //  src={selectedDocument.includes('https://view.officeapps.live.com') === true ? {selectedDocument}  :
+        //   `https://view.officeapps.live.com/op/embed.aspx?src=${selectedDocument}`}
+        //   width="100%" height="600px" sandbox="allow-scripts allow-forms allow-same-origin"
+        //  ></iframe>
+        <iframe 
+      src={selectedDocument} 
+      width="100%" 
+      height="600px" 
+      style={{ border: "none" }}
+    ></iframe>
+      )}
+      {(selectedParams === 'excel' && selectedDocument) && (
+        // <iframe
+        // src={selectedDocument?.includes('https://view.officeapps.live.com') ? {selectedDocument}  :
+        //  `https://view.officeapps.live.com/op/embed.aspx?src=${selectedDocument}`}
+        //  width="100%" height="600px" sandbox="allow-scripts allow-forms allow-same-origin"
+        // ></iframe>
+        <iframe 
+      src={selectedDocument} 
+      width="100%" 
+      height="600px" 
+      style={{ border: "none" }}
+    ></iframe>
       )}
       {error && <p>{error}</p>}
       {selectedParams === 'msg' ? <EmailPreview
@@ -118,6 +171,7 @@ const AppFileViewer = React.memo(() => {
         body={selectedEmail.body}
         bcc={selectedEmail.bcc}
       /> : ''}
+      {/* {selectedParams === 'text' ? <div style={styles} dangerouslySetInnerHTML={{ __html: selectedText }} /> : ''} */}
       {selectedParams === 'txt' ? <iframe srcdoc={selectedText} width="100%" height="600px"></iframe>
         : ''}
       {selectedParams === 'pdf' ? <iframe src={`${selectedPdf}#toolbar=0`} width="100%" height="600px"></iframe> : ''}
