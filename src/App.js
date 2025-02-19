@@ -24,10 +24,10 @@ const AppFileViewer = React.memo(() => {
   // const apiendPoint3 = 'http://localhost:8080/fileviewer/readmsg';
   // const apiendPoint4 = 'http://localhost:8080/fileviewer/readfilepng';
 
-  const apiendPoint1 = 'https://3.82.214.180:8080/fileviewer/fileviewer/file';
-  const apiendPoint2 = 'https://3.82.214.180:8080/fileviewer/fileviewer/readfile';
-  const apiendPoint3 = 'https://3.82.214.180:8080/fileviewer/fileviewer/readmsg';
-  const apiendPoint4 = 'https://3.82.214.180:8080/fileviewer/fileviewer/readfilepng';
+  const apiendPoint1 = 'http://3.82.214.180:8080/fileviewer/fileviewer/file';
+  const apiendPoint2 = 'http://3.82.214.180:8080/fileviewer/fileviewer/readfile';
+  const apiendPoint3 = 'http://3.82.214.180:8080/fileviewer/fileviewer/readmsg';
+  const apiendPoint4 = 'http://3.82.214.180:8080/fileviewer/fileviewer/readfilepng';
 
   const styles = {
     marginLeft: '1%',
